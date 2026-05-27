@@ -1,0 +1,141 @@
+---
+title: "Leprechaun project"
+
+---
+
+
+
+```{r}
+#Prepare data
+
+pacman::p_load(tidyverse, dplyr)
+
+#file name for data set
+file <- "all_data.csv"
+
+#output file name
+output <- "all_summaries.csv"
+
+#prepare lookup for city names
+stations <- c(23011, 40458, 70247, 14015, 94030, 86282, 9021, 66006)
+cities <- c("Adelaide", "Brisbane", "Canbera", "Darwin", "Hobart", "Melbourne", "Perth", "Sydney")
+city_df <- data.frame(station = stations, city = cities)
+
+#Read data file
+all_data <- data_frame(read_csv(file))
+
+#Add city column
+all_data <- all_data %>%
+  left_join(city_df, by = "station")
+
+#remove NA
+all_data <- na.omit(all_data)
+
+```
+
+```{r}
+# Generate box plots
+
+#box plot average temperature
+ggplot(all_data, aes(y = avg_temp, x = city)) +
+  geom_boxplot(fill = "lightyellow") +
+  theme_bw() +
+  labs(title = "Average daily temperature", 
+     y = "Average temperature (degC)") + 
+  theme(legend.position = "none")
+
+#box plot temperature delta
+ggplot(all_data, aes(y = delta_temp, x = city)) +
+  geom_boxplot(fill = "pink") +
+  theme_bw() +
+  labs(title = "Daily temperature range (maxT - minT)", 
+     y = "Temperature range (degC)") + 
+  theme(legend.position = "none")
+
+#box plot humidity
+ggplot(all_data, aes(y = avg_trh, x = city)) +
+  geom_boxplot(fill = "lightblue") +
+  theme_bw() +
+  labs(title = "Daily average humidity", 
+     y = "Humidity ()") + 
+  theme(legend.position = "none")
+
+#box plot solar radiation
+ggplot(all_data, aes(y = radiation, x = city)) +
+  geom_boxplot(fill = "orange") +
+  theme_bw() +
+  labs(title = "Daily total solar radiation", 
+     y = "Solar radiation (MJ/m^2)") + 
+  theme(legend.position = "none")
+
+```
+
+```{r}
+#make a table of summary statistics for each variable
+
+#summary for average daily temperature
+avg_t_summary <- all_data %>%
+  group_by(city) %>%
+  summarise(Minimum = min(avg_temp, na.rm = TRUE), 
+            Q1 = quantile(avg_temp, p = 0.25, na.rm = TRUE), 
+            Median = median(avg_temp, na.rm = TRUE), 
+            Mean = mean(avg_temp, na.rm = TRUE), 
+            Q3 = quantile(avg_temp, p = 0.75, na.rm = TRUE), 
+            Maximum = max(avg_temp, na.rm = TRUE), 
+            IQR = IQR(avg_temp, na.rm = TRUE),
+            SD = sd(avg_temp, na.rm = TRUE),
+            Variance = var(avg_temp, na.rm = TRUE))
+avg_t_summary$variable = "average daily temperature"
+
+#summary for temperature delta
+t_delta_summary <- all_data %>%
+  group_by(city) %>%
+  summarise(Minimum = min(delta_temp, na.rm = TRUE), 
+            Q1 = quantile(delta_temp, p = 0.25, na.rm = TRUE), 
+            Median = median(delta_temp, na.rm = TRUE), 
+            Mean = mean(delta_temp, na.rm = TRUE), 
+            Q3 = quantile(delta_temp, p = 0.75, na.rm = TRUE), 
+            Maximum = max(delta_temp, na.rm = TRUE), 
+            IQR = IQR(delta_temp, na.rm = TRUE),
+            SD = sd(delta_temp, na.rm = TRUE),
+            Variance = var(delta_temp, na.rm = TRUE))
+t_delta_summary$variable = "temperature delta"
+
+#summary for average daily humidity
+avg_h_summary <- all_data %>%
+  group_by(city) %>%
+  summarise(Minimum = min(avg_trh, na.rm = TRUE), 
+            Q1 = quantile(avg_trh, p = 0.25, na.rm = TRUE), 
+            Median = median(avg_trh, na.rm = TRUE), 
+            Mean = mean(avg_trh, na.rm = TRUE), 
+            Q3 = quantile(avg_trh, p = 0.75, na.rm = TRUE), 
+            Maximum = max(avg_trh, na.rm = TRUE), 
+            IQR = IQR(avg_trh, na.rm = TRUE),
+            SD = sd(avg_trh, na.rm = TRUE),
+            Variance = var(avg_trh, na.rm = TRUE))
+avg_h_summary$variable = "average daily humidity"
+
+#summary for daily radiation
+radn_summary <- all_data %>%
+  group_by(city) %>%
+  summarise(Minimum = min(radiation, na.rm = TRUE), 
+            Q1 = quantile(radiation, p = 0.25, na.rm = TRUE), 
+            Median = median(radiation, na.rm = TRUE), 
+            Mean = mean(radiation, na.rm = TRUE), 
+            Q3 = quantile(radiation, p = 0.75, na.rm = TRUE), 
+            Maximum = max(radiation, na.rm = TRUE), 
+            IQR = IQR(radiation, na.rm = TRUE),
+            SD = sd(radiation, na.rm = TRUE),
+            Variance = var(radiation, na.rm = TRUE))
+radn_summary$variable = "daily solar radiation"
+
+#combine summaries and export as one .csv file
+all_summary <- rbind(avg_t_summary, avg_h_summary, t_delta_summary, radn_summary)
+
+write.csv(all_summary, output, row.names = FALSE)
+
+
+```
+
+
+
