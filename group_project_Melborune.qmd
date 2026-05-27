@@ -1,0 +1,418 @@
+---
+title: "group_project_part_2_David.qmd"
+format: html
+editor: visual
+---
+
+## **Topic**
+
+How do solar radiation and humidity influence daily average temperature and daily temperature range in Australian capital cities?
+
+## **Research Aim**
+
+The aim of this analysis is to evaluate whether solar radiation or average relative humidity has a stronger influence on daily temperature patterns.
+
+Two response variables are considered:
+
+-   Daily average temperature (`avg_temp`), representing the overall thermal condition of the day
+
+-   Daily temperature range (`delta_temp`), representing the variation between maximum and minimum temperature within a day
+
+Melborune is used as the initial case study to establish and validate the analytical workflow before extending to multiple cities.
+
+## **Variable Selection and Rationale**
+
+Solar radiation and humidity are selected as the key explanatory variables due to their physical relevance:
+
+-   Solar radiation is the primary driver of surface heating
+
+-   Relative humidity reflects atmospheric moisture, which can influence heat retention and temperature variation
+
+Average relative humidity (`avg_trh`) is used as a simplified daily humidity indicator, calculated from maximum and minimum relative humidity.
+
+This approach follows the updated project direction of comparing the strength of radiation and humidity effects on temperature patterns.
+
+## **Data Preparation**
+
+The Melborune daily weather dataset was imported and relevant variables were selected, including:
+
+-   Radiation
+
+-   Temperature (average, maximum, minimum)
+
+-   Relative humidity (maximum, minimum, and average)
+
+-   Rainfall
+
+-   Date
+
+The date variable was converted into standard date format to ensure consistency.
+
+The analysis focuses on the following variables:
+
+-   Response variables: `avg_temp`, `delta_temp`
+
+-   Predictor variables: `radiation`, `avg_trh`
+
+## **Outlier Detection and Data Cleaning**
+
+Outliers were identified using the Interquartile Range (IQR) method for key variables:
+
+-   `avg_temp`
+
+-   `delta_temp`
+
+-   `radiation`
+
+-   `avg_trh`
+
+Two datasets were created:
+
+-   **Full dataset (`df_full`)** – includes all observations
+
+-   **Clean dataset (`df_clean`)** – excludes extreme outliers
+
+This allows comparison of results to assess whether conclusions are robust or influenced by extreme values.
+
+## **Modelling Approach**
+
+Two multiple linear regression models were fitted:
+
+### Model 1 — Average Temperature
+
+avg_temp=β0+β1(radiation)+β2(avg_trh)+ε\text{avg\_temp} = \beta\_0 + \beta\_1(\text{radiation}) + \beta\_2(\text{avg\_trh}) + \varepsilonavg\_temp=β0​+β1​(radiation)+β2​(avg_trh)+ε
+
+### Model 2 — Temperature Range
+
+delta_temp=β0+β1(radiation)+β2(avg_trh)+ε\text{delta\_temp} = \beta\_0 + \beta\_1(\text{radiation}) + \beta\_2(\text{avg\_trh}) + \varepsilondelta\_temp=β0​+β1​(radiation)+β2​(avg_trh)+ε
+
+Multiple linear regression is used to evaluate the effect of each predictor while controlling for the other. This allows a more reliable comparison of the relative importance of radiation and humidity.
+
+Models were fitted on both full and cleaned datasets to compare stability of results.
+
+## **Model Assumptions and Diagnostics**
+
+To ensure that the regression results are valid and interpretable, diagnostic checks were performed on the cleaned models.
+
+The following assumptions were assessed:
+
+### 1. Linearity and Constant Variance
+
+-   Checked using residual vs fitted plots
+
+-   A random scatter pattern indicates acceptable linearity
+
+### 2. Normality of Residuals
+
+-   Checked using Q-Q plots and histograms
+
+-   Residuals should approximately follow a normal distribution
+
+### 3. Influence of Extreme Observations
+
+-   Checked using influence plots
+
+-   Ensures results are not dominated by a small number of observations
+
+### 4. Multicollinearity
+
+-   Assessed using Variance Inflation Factor (VIF)
+
+-   Low VIF values indicate predictors are not strongly correlated
+
+If these conditions are reasonably satisfied, the regression coefficients, p-values, and R² values can be interpreted with confidence.
+
+## **Visualisation of Relationships**
+
+Scatter plots with fitted regression lines were used to visualise the relationships between:
+
+-   `radiation` and temperature variables
+
+-   `avg_trh` and temperature variables
+
+These plots provide an intuitive understanding of:
+
+-   direction of relationships
+
+-   strength and spread of data
+
+-   potential non-linearity
+
+## **Interpretation Strategy**
+
+The results will be interpreted based on:
+
+-   Sign and magnitude of regression coefficient
+
+-   Statistical significance (p-values)
+
+-   Model fit (R² and adjusted R²)
+
+-   Consistency between full and cleaned datasets
+
+The goal is to determine:
+
+-   Whether radiation or humidity is the stronger predictor
+
+-   Whether their influence differs between average temperature and temperature range
+
+## **Role of Melborune in the Project**
+
+This analysis serves as a pilot study for the overall group project.
+
+Once the workflow is confirmed, the same process will be applied to:
+
+-   Melbourne
+
+-   Brisbane
+
+-   Adelaide
+
+-   Perth
+
+-   Hobart
+
+This will allow comparison of:
+
+-   coefficient values
+
+-   statistical significance
+
+-   model performance across cities
+
+## **Summary**
+
+This QMD establishes a complete workflow for Part 1 of the group project, including:
+
+-   data preparation
+
+-   outlier handling
+
+-   multiple regression modelling
+
+-   assumption checking
+
+-   visualization
+
+-   The Melborune results provide the foundation for extending the analysis to multiple Australian capital cities and comparing how radiation and humidity influence temperature patterns across different climates.
+
+Create one comparison tables like this:
+
+| City | Model | Radiation Coef | Radiation p-value | avg_trh Coef | avg_trh p-value | Adjusted R² | Main Finding |
+|---------|---------|---------|---------|---------|---------|---------|---------|
+|  |  |  |  |  |  |  |  |
+
+| City      | Response Variable | Stronger Predictor | Interpretation |
+|-----------|-------------------|--------------------|----------------|
+| Sydney    |                   |                    |                |
+| Melborune |                   |                    |                |
+| Melbourne |                   |                    |                |
+
+## Running Code
+
+**Section 1**
+
+Load Tool
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(car)
+```
+
+Read Data and Organize columns, Check Data and Clean Data
+
+```{r}
+#Section 1, load data, check data, clean data 
+# 1. Read file
+df <- read_csv("/Users/davidmo/Documents/Adelaide/EDA/Group Project/Silo/Melborune_Silo_86282.csv")
+```
+
+```{r}
+
+#Convert date formate
+df$date <-as.Date(df$date, format = "%Y/%m/%d")
+
+#Keep only needed columns
+df <- df %>%
+  select(
+    date, rain, radiation,
+    avg_temp, delta_temp,
+    max_temp, min_temp,
+    max_trh, min_trh, avg_trh
+  )
+```
+
+```{r}
+#Check is the data is usable
+##rainfall > 0, radiation > 0, avg/max/min temperature reasonable range, humidity 0-100
+summary(df)
+str(df)
+#Outlier detection (daily, define IQR function),
+##df_full>>>original data, df_clean>>>outliers removed
+remove_outliers <- function(x) {
+  Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  x >= (Q1 - 1.5 * IQR) & x <= (Q3 + 1.5 * IQR)
+}
+
+df_full <- df
+
+df_clean <- df %>%
+  filter(
+    remove_outliers(avg_temp),
+    remove_outliers(max_temp),
+    remove_outliers(min_temp),
+    remove_outliers(radiation),
+    remove_outliers(delta_temp),
+    remove_outliers(avg_trh),
+#remove_outliers(rain)(if include, the outliers % will be more than 19%)
+  )
+
+#Check how much data has been removed as percentage of total
+nrow(df_full)
+nrow(df_clean)
+
+# To see how much was removed
+(nrow(df_full) - nrow(df_clean)) / nrow(df_full)
+```
+
+**Section 2**
+
+Model
+
+```{r}
+# Full dataset models
+model_full_avg <- lm(avg_temp ~ radiation + avg_trh, data = df_full)
+model_full_delta <- lm(delta_temp ~ radiation + avg_trh, data = df_full)
+
+# Clean dataset models
+model_clean_avg <- lm(avg_temp ~ radiation + avg_trh, data = df_clean)
+model_clean_delta <- lm(delta_temp ~ radiation + avg_trh, data = df_clean)
+
+# Check results
+summary(model_full_avg)
+summary(model_full_delta)
+summary(model_clean_avg)
+summary(model_clean_delta)
+```
+
+**Section 3**
+
+Output and Plotting
+
+```{r}
+# Assumption checks for clean models
+
+# 1. Residual vs fitted
+plot(model_full_avg, which = 1)
+plot(model_full_delta, which = 1)
+
+# 2. Normal Q-Q
+plot(model_full_avg, which = 2)
+plot(model_full_delta, which = 2)
+
+# 3. Histogram of residuals
+hist(residuals(model_full_avg), main = "Residuals Histogram: avg_temp model")
+hist(residuals(model_full_delta), main = "Residuals Histogram: delta_temp model")
+
+# 4. Influential points
+plot(model_full_avg, which = 4)
+plot(model_full_delta, which = 4)
+
+# 5. Multicollinearity
+vif(model_full_avg)
+vif(model_full_delta)
+```
+
+# Assumption checks mean:
+
+## Residual vs fitted
+
+Check:
+
+-   random spread is good
+
+-   curve pattern is bad
+
+-   funnel shape is bad
+
+## Q-Q plot
+
+Check:
+
+-   points roughly follow the straight line
+
+## Histogram of residuals
+
+Check:
+
+-   roughly bell-shaped is fine
+
+## VIF
+
+Check:
+
+-   near 1 is very good
+
+-   above 5 starts to be a concern
+
+```{r}
+# avg_temp vs radiation
+p1 <- ggplot(df_full, aes(x = radiation, y = avg_temp)) +
+  geom_point(alpha = 0.15, size = 1) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(
+    title = "Average Temperature vs Radiation",
+    x = "Radiation",
+    y = "Average Temperature (°C)"
+  ) +
+  theme_minimal()
+
+# avg_temp vs avg_trh
+p2 <- ggplot(df_full, aes(x = avg_trh, y = avg_temp)) +
+  geom_point(alpha = 0.15, size = 1) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(
+    title = "Average Temperature vs Average Relative Humidity",
+    x = "Average Relative Humidity (%)",
+    y = "Average Temperature (°C)"
+  ) +
+  theme_minimal()
+
+# delta_temp vs radiation
+p3 <- ggplot(df_full, aes(x = radiation, y = delta_temp)) +
+  geom_point(alpha = 0.15, size = 1) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(
+    title = "Daily Temperature Range vs Radiation",
+    x = "Radiation",
+    y = "Daily Temperature Range (°C)"
+  ) +
+  theme_minimal()
+
+# delta_temp vs avg_trh
+p4 <- ggplot(df_full, aes(x = avg_trh, y = delta_temp)) +
+  geom_point(alpha = 0.15, size = 1) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(
+    title = "Daily Temperature Range vs Average Relative Humidity",
+    x = "Average Relative Humidity (%)",
+    y = "Daily Temperature Range (°C)"
+  ) +
+  theme_minimal()
+
+# Show plots
+p1
+p2
+p3
+p4
+
+#ggsave("plot_avg_temp_radiation.png", p1, width = 7, height = 5, dpi = 300)
+#ggsave("plot_avg_temp_avg_trh.png", p2, width = 7, height = 5, dpi = 300)
+#ggsave("plot_delta_temp_radiation.png", p3, width = 7, height = 5, dpi = 300)
+#ggsave("plot_delta_temp_avg_trh.png", p4, width = 7, height = 5, dpi = 300)
+```
